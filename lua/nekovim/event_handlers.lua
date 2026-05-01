@@ -48,6 +48,20 @@ function EventHandlers:setup(nekovim)
 		end)
 	end
 
+	self.update_timer = vim.loop.new_timer()
+	self.update_timer:start(
+		15000,
+		15000,
+		vim.schedule_wrap(function()
+			local buf = self.nekovim.current_buf
+			if buf and vim.api.nvim_buf_is_valid(buf) then
+				self.nekovim.buffers_props[buf] = nil
+				self.nekovim:make_buf_props(buf)
+				self.nekovim:update()
+			end
+		end)
+	)
+
 	for event in pairs(events) do
 		vim.api.nvim_create_autocmd(event, {
 			callback = function(props)
@@ -58,12 +72,20 @@ function EventHandlers:setup(nekovim)
 end
 
 function EventHandlers:handle_ModeChanged(props)
-	if not vim.api.nvim_buf_is_valid(props.buf) then
+	local buf = props.buf
+	if buf == 0 then
+		buf = vim.api.nvim_get_current_buf()
+	end
+	if not vim.api.nvim_buf_is_valid(buf) then
 		return
 	end
-	local buf = self.nekovim.buffers_props[props.buf]
-	if buf then
-		self.nekovim.buffers_props[props.buf].mode = vim.api.nvim_get_mode().mode
+
+	if not self.nekovim.buffers_props[buf] then
+		self.nekovim:make_buf_props(buf)
+	end
+
+	if self.nekovim.buffers_props[buf] then
+		self.nekovim.buffers_props[buf].mode = vim.api.nvim_get_mode().mode
 		self.nekovim:update()
 	end
 end
