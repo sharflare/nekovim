@@ -95,8 +95,11 @@ function EventHandlers:handle_BufEnter(props)
 		return
 	end
 
-	local filePath = vim.api.nvim_buf_get_name(props.buf)
-	local fileType = vim.bo[props.buf].filetype or nil
+	local bt = vim.bo[props.buf].buftype
+	local ft = vim.bo[props.buf].filetype
+	if bt == "nofile" or bt == "prompt" or bt == "quickfix" or ft == "noice" then
+		return
+	end
 
 	self.nekovim.current_buf = props.buf
 	self.nekovim:make_buf_props(props.buf)
