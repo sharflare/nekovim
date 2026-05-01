@@ -28,7 +28,9 @@ function EventHandlers:setup(nekovim)
 		end,
 
 		---@param props {buf: integer}
-		-- ['ModeChanged'] = function(props) self:handle_ModeChanged(props) end,
+		["ModeChanged"] = function(props)
+			self:handle_ModeChanged(props)
+		end,
 
 		---@param props {buf: integer}
 		["BufWipeout"] = function(props)
@@ -56,11 +58,10 @@ function EventHandlers:setup(nekovim)
 end
 
 function EventHandlers:handle_ModeChanged(props)
+	if not vim.api.nvim_buf_is_valid(props.buf) then
+		return
+	end
 	local buf = self.nekovim.buffers_props[props.buf]
-
-	-- When a folder is open for some reason the buffer is not
-	-- registered-it should be. For the moment I'll leave a check here.
-
 	if buf then
 		self.nekovim.buffers_props[props.buf].mode = vim.api.nvim_get_mode().mode
 		self.nekovim:update()
@@ -68,8 +69,6 @@ function EventHandlers:handle_ModeChanged(props)
 end
 
 function EventHandlers:handle_BufEnter(props)
-	-- TODO: 'Invalid buffer id: 1' error
-
 	if not vim.api.nvim_buf_is_valid(props.buf) then
 		return
 	end
