@@ -100,6 +100,10 @@ end
 function NekoVim:make_buf_props(buf)
 	buf = buf or vim.api.nvim_get_current_buf()
 
+	if not vim.api.nvim_buf_is_valid(buf) then
+		return
+	end
+
 	-- Check history
 	if self.buffers_props[buf] then
 		return
