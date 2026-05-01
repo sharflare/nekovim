@@ -1,4 +1,4 @@
-local assets = require 'default_makers.assets'
+local assets = require("default_makers.assets")
 
 ---@class GitRepositoryMetadata
 ---@field owner string
@@ -7,136 +7,152 @@ local assets = require 'default_makers.assets'
 
 ---@return GitRepositoryMetadata?
 local function getGitRepository()
-  local f = io.popen('git remote get-url origin 2>/dev/null', 'r')
-  if not f then return end
+	local f = io.popen("git remote get-url origin 2>/dev/null", "r")
+	if not f then
+		return
+	end
 
-  local url = f:read('*a')
-  local ok, _, status = f:close()
+	local url = f:read("*a")
+	local ok, _, status = f:close()
 
-  if not ok or status ~= 0 or not url or url == '' then
-    return
-  end
+	if not ok or status ~= 0 or not url or url == "" then
+		return
+	end
 
-  local owner, name = url:match '.*[:/]([^/]+)/(.*)'
+	local owner, name = url:match(".*[:/]([^/]+)/(.*)")
 
-  return {
-    owner = owner,
-    name = name,
-    url = url
-  }
+	return {
+		owner = owner,
+		name = name,
+		url = url,
+	}
 end
-
 
 ---@type PresenceMakers
 local makers = {
-  timestamps = {
-    start = function(self)
-      return self.presence_props.startTimestamp
-    end
-  },
+	timestamps = {
+		start = function(self)
+			return self.presence_props.startTimestamp
+		end,
+	},
 
-  validate = function(self)
-    local props = self.buffers_props[self.current_buf]
-    local asset = assets:find(props.filePath, props.fileType)
+	validate = function(self)
+		local props = self.buffers_props[self.current_buf]
+		if not props then
+			return false
+		end
+		local asset = assets:find(props.filePath, props.fileType)
 
-    return asset ~= nil
-  end,
+		return asset ~= nil
+	end,
 
-  assets = {
-    large_image = function(self)
-      if self.presence_props.idling then
-        return 'keyboard'
-      end
+	assets = {
+		large_image = function(self)
+			if self.presence_props.idling then
+				return "keyboard"
+			end
 
-      local props = self.buffers_props[self.current_buf]
-      local asset = assets:find(props.filePath, props.fileType)
+			local props = self.buffers_props[self.current_buf]
+			local asset = assets:find(props.filePath, props.fileType)
 
-      return asset and asset.key or nil
-    end,
-    large_text = function(self)
-      if self.presence_props.idling then return end
+			return asset and asset.key or nil
+		end,
+		large_text = function(self)
+			if self.presence_props.idling then
+				return
+			end
 
-      local props = self.buffers_props[self.current_buf]
-      local asset = assets:find(props.filePath, props.fileType)
+			local props = self.buffers_props[self.current_buf]
+			local asset = assets:find(props.filePath, props.fileType)
 
-      if not asset then return end
+			if not asset then
+				return
+			end
 
-      return 'Editing ' .. asset.name .. ' file'
-    end,
-    small_image = function(self)
-      if self.presence_props.idling then
-        return 'idle'
-      end
-    end,
-    -- small_text = function(self)
-    --   if self.presence_props.idling then return end
-    --   return 'NeoVim'
-    -- end
-  },
+			return "Editing " .. asset.name .. " file"
+		end,
+		small_image = function(self)
+			if self.presence_props.idling then
+				return "idle"
+			end
+		end,
+		-- small_text = function(self)
+		--   if self.presence_props.idling then return end
+		--   return 'NeoVim'
+		-- end
+	},
 
-  state = function(self)
-    if self.presence_props.idling then return end
+	state = function(self)
+		if self.presence_props.idling then
+			return
+		end
 
-    local repo = getGitRepository()
-    if not repo then return end
+		local repo = getGitRepository()
+		if not repo then
+			return
+		end
 
-    return 'Working on '..repo.name
-  end,
+		return "Working on " .. repo.name
+	end,
 
-  details = function(self)
-    if self.presence_props.idling then
-      return 'Sleeping on the keyboard...'
-    end
+	details = function(self)
+		if self.presence_props.idling then
+			return "Sleeping on the keyboard..."
+		end
 
-    local props = self.buffers_props[self.current_buf]
-    local asset = assets:find(props.filePath, props.fileType)
+		local props = self.buffers_props[self.current_buf]
+		local asset = assets:find(props.filePath, props.fileType)
 
-    if not asset then return end
+		if not asset then
+			return
+		end
 
-    if asset.type == 'file explorer' then
-      return 'Browsing between files...'
-    elseif asset.type == 'plugin manager' then
-      return 'Managing ' .. asset.name .. ' plugins...'
-    end
+		if asset.type == "file explorer" then
+			return "Browsing between files..."
+		elseif asset.type == "plugin manager" then
+			return "Managing " .. asset.name .. " plugins..."
+		end
 
-    local mode = props.mode or 'n'
-    local fileName = props.fileName or 'unknown'
+		local mode = props.mode or "n"
+		local fileName = props.fileName or "unknown"
 
-    if mode == 'i' then
-      return 'Editing ' .. fileName
-    elseif mode == 'v' then
-      return 'Selecting things in ' .. fileName
-    elseif mode == 'n' then
-      return 'Looking at ' .. fileName
-    elseif mode == 'c' then
-      return 'Typing vim command'
-    else
-      return 'Doing stuff for ' .. fileName .. ' in ' .. mode .. ' mode'
-    end
-  end,
+		if mode == "i" then
+			return "Editing " .. fileName
+		elseif mode == "v" then
+			return "Selecting things in " .. fileName
+		elseif mode == "n" then
+			return "Looking at " .. fileName
+		elseif mode == "c" then
+			return "Typing vim command"
+		else
+			return "Doing stuff for " .. fileName .. " in " .. mode .. " mode"
+		end
+	end,
 
-  buttons = {
-    function()
-      local repo = getGitRepository()
-      if not repo then return end
+	buttons = {
+		function()
+			local repo = getGitRepository()
+			if not repo then
+				return
+			end
 
-      return {
-        label = 'Repository',
-        url = repo.url
-      }
-    end
-  }
+			return {
+				label = "Repository",
+				url = repo.url,
+			}
+		end,
+	},
 }
 
 ---@type WorkPropsMakers
 local props = {
-  client_id = '1059272441194623126',
-  multiple = true,
-  events = true,
-  idle_time = 120 -- 120s = 2m
+	client_id = "1059272441194623126",
+	multiple = true,
+	events = true,
+	idle_time = 120, -- 120s = 2m
 }
 
 return {
-  makers = makers,
-  props = props
+	makers = makers,
+	props = props,
 }

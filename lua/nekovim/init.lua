@@ -145,8 +145,12 @@ function NekoVim:make_presence()
 	if not self.buffers_props[self.current_buf] then
 		self:make_buf_props(self.current_buf)
 	end
-	local makers = self.presence_makers
 
+	if not self.buffers_props[self.current_buf] then
+		return nil
+	end
+
+	local makers = self.presence_makers
 	if type(makers) ~= "table" then
 		return
 	end
